@@ -6,6 +6,7 @@ from pathlib import Path
 import numpy as np
 import torch
 from PIL import Image
+import pandas as pd
 
 
 def load_recipe(path: str):
@@ -108,14 +109,15 @@ def stage_inverse(x, yy, xx, cc, stage, substeps):
         xor_seed_s = xor_key + 1009 * s
         add_s = (add_key + 37 * s) % 256
 
-        # TODO 1: undo channel permutation
+        x = x[..., inv_perm]
+        x = x - add_s
 
-        # TODO 2: undo modular addition
+        mask = make_mask(yy, xx, cc, xor_seed_s)
+        x = torch.bitwise_xor(x, mask)
 
-        # TODO 3: recreate same mask and undo XOR
-
-        # TODO 4: undo horizontal and vertical rolls
-
+        x = torch.roll(x, shifts=-dx_s, dims=2)
+        x = torch.roll(x, shifts=-dy_s, dims=1)
+        
     return x
 
 
@@ -168,6 +170,8 @@ def main():
     total_save_time = 0.0
     total_images_processed = 0
 
+    list = []
+
     for batch_idx, (names, batch_cpu) in enumerate(make_batches(items, args.batch_size), start=1):
         if args.device == "cuda":
             batch = batch_cpu.pin_memory().to("cuda", non_blocking=True)
@@ -188,6 +192,8 @@ def main():
         total_compute_time += compute_time
         total_images_processed += batch.shape[0] * args.repeat
 
+        list.append((batch_idx, compute_time))
+
         print(
             f"batch {batch_idx}: {batch.shape[0]} images, "
             f"compute {compute_time:.4f} s, "
@@ -207,6 +213,9 @@ def main():
         f"Inverse compute throughput: "
         f"{total_images_processed / total_compute_time:.2f} img/s"
     )
+
+    df = pd.DataFrame(list)
+    df.to_csv('cpu_run.csv')
 
     if args.save_outputs:
         print(f"Output save total time: {total_save_time:.4f} s")

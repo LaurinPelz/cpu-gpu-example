@@ -1,0 +1,8 @@
+Save outputs: False
+batch 1: 32 images, compute 128.5250 s, 0.25 img/s
+batch 2: 32 images, compute 133.5379 s, 0.24 img/s
+batch 3: 32 images, compute 133.7364 s, 0.24 img/s
+^Tbatch 4: 32 images, compute 133.6401 s, 0.24 img/s
+batch 5: 32 images, compute 133.7870 s, 0.24 img/s
+batch 6: 32 images, compute 135.1981 s, 0.24 img/s
+
